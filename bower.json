@@ -1,0 +1,22 @@
+{
+  "name": "gallery",
+  "version": "0.0.0",
+  "authors": [
+    "Brendan Le <le.brendan@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "requirejs": "~2.1.20"
+  }
+}

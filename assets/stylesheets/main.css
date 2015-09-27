@@ -1,0 +1,32 @@
+html, body {
+  height: 100%;
+  margin: 0px;
+  font-family: helvetica, arial, sans-serif; }
+
+.gallery-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+  .gallery-container #gallery:hover {
+    cursor: none; }
+  .gallery-container .modes {
+    margin-left: 18px; }
+    .gallery-container .modes .btn {
+      padding: 16px 28px;
+      margin: 6px;
+      background: #BBB;
+      font-size: 12px;
+      text-transform: uppercase;
+      transition: background 0.2s;
+      color: #212121;
+      text-align: center;
+      font-weight: 300; }
+      .gallery-container .modes .btn:hover {
+        background: #AAA;
+        cursor: pointer; }
+      .gallery-container .modes .btn:active {
+        background: #999; }
+    .gallery-container .modes .mode.selected {
+      background: #a34242;
+      color: white; }

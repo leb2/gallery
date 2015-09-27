@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Art Gallery</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="assets/stylesheets/main.css">
+        <script src="assets/js/vendor/modernizr-2.8.3.min.js"></script>
+    </head>
+    <body>
+
+        <div class='gallery-container'>
+            <canvas id='gallery' height='500px' width='800px'>
+            </canvas>
+            <div class='modes'>
+                <div class='btn mode paintings'>Pantings</div>
+                <div class='btn selected mode walls'>Walls</div>
+                <div class='btn mode select'>Select</div>
+                <div class='btn reset'>Reset</div>
+                <div class='btn calculate'>Calculate</div>
+                <div class='score-container'>
+                    Score: <span class='score'>0</div>
+                </div>
+        </div>
+        </div>
+
+        <!-- <script src="assets/js/vendor/jquery-1.11.2.min.js"></script> -->
+        <script src="bower_components/requirejs/require.js" data-main='assets/js/main.js'></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
