@@ -1,260 +1,129 @@
-
 requirejs.config({
-    baseUrl: 'assets/js/vendor',
+    baseUrl: 'assets/js/',
     paths: {
-        jquery: 'jquery-1.11.2.min'
+        jquery: 'vendor/jquery-1.11.2.min'
     }
 });
 
-require(['jquery'], function($) {
+require([
+    'jquery',
+    'constants',
+    'util',
+    'intersect',
+    'Gallery',
+    'Point',
+    'Camera',
+    'Slot',
+    'Wall',
+    'Painting'
+], function($, cst, util, intersect, Gallery, Point, Camera, Slot, Wall, Painting) {
+
     var canvas = document.getElementById('gallery');
     var ctx = canvas.getContext('2d');
 
-    var ROOM_WIDTH = 22;
-    var ROOM_HEIGHT = 20;
-    var SCALE = 20;
-    var WALL_LENGTH = 5;
-    var PAINTING_LENGTH = 1;
+    $('body').css('background', cst.BACKGROUND_COLOR);
 
-    var CURSOR_SIZE = 5;
-
-    var PADDING_LEFT = 160;
-    var PADDING_TOP = 50;
-
-    var CAMERA_ANGLE = Math.PI/6;
-
-    var ANGLE_SNAP = Math.PI/12;
-
-    var PAINTING_COLOR = '#411d3e';
-
-
-    var Gallery = {
-        SELECT_MODE : "Select Mode",
-        WALL_MODE : "Wall Mode",
-        PAINTING_MODE : "Painting Mode",
-
-        drawing: false,
-        walls: [],
-        paintings: [],
-        pendingItem: {}
-    };
     Gallery.mode = Gallery.WALL_MODE;
     Gallery.camera1 = new Camera(new Point(0, 0));
     Gallery.camera2 = new Camera(
-        new Point(SCALE * ROOM_WIDTH, SCALE * ROOM_HEIGHT)
+        new Point(cst.SCALE * cst.ROOM_WIDTH, cst.SCALE * cst.ROOM_HEIGHT), {
+            angleStart: Math.PI,
+            direction: -1
+        }
     );
 
     function init() {
         addFrameWalls();
         draw();
-
     }
 
-    function Camera(position) {
-        this.position = position;
-        this.angleStart = 0;
-        this.angleEnd = this.angleStart + CAMERA_ANGLE;
-
-        this.angleInRange = function(angle) {
-            return angle >= this.angleStart && angle <= this.angleEnd;
-        }
-
-        this.pointInRange = function(point) {
-            return (this.angleInRange(this.position.angleBetween(point)))
-        }
-
-        this.paintingsVisible = function() {
-            var count = 0;
-
-            for (var i=0; i<Gallery.paintings.length; i++) {
-                var painting = Gallery.paintings[i];
-                if (this.pointInRange(painting.start()) ||
-                    this.pointInRange(painting.end())) {
-                        count += 1;
-                }
-            }
-
-            return count;
-        }
-
-        this.drawRange = function() {
-            var startAnglePoint = this.position.pointAtAngle(this.angleStart, 24);
-            var endAnglePoint = this.position.pointAtAngle(this.angleEnd, 24);
-            drawLine(this.position, startAnglePoint, "orange");
-            drawLine(this.position, endAnglePoint, "orange");
-        }
-    }
-
-    function Slot(point, index) {
-        this.point = typeof point !== 'undefined' ? point : new Point(0, 0);
-        this.index = typeof index !== 'undefined' ? index : 0;
-    }
-
-    function Point(x, y) {
-        this.x = x;
-        this.y = y;
-
-        this.angleBetween = function(point) {
-            return Math.atan2(point.y - this.y, point.x - this.x);
-        }
-        this.distanceTo = function(point) {
-            var x = this.x - point.x;
-            var y = this.y - point.y;
-            return Math.sqrt(x * x + y * y);
-        }
-        this.pointAtAngle = function(angle, length) {
-            var x = SCALE * length * Math.cos(angle);
-            var y = SCALE * length * Math.sin(angle);
-
-            return new Point(this.x + x, this.y + y);
-        }
-    }
-
-    function Wall(start, angle, length) {
-        this.start = start;
-        this.angle = typeof angle !== 'undefined' ? angle : 0;
-        this.length = typeof length !== 'undefined' ? length: WALL_LENGTH;
-
-        console.log("AT THE SETTING");
-        console.log(this.length);
-
-        this.end = function() {
-            var angle = snapToAngle(this.angle); // Safety
-            return this.start.pointAtAngle(angle, this.length);
-        }
-
-        this.slots = function() {
-            var slots = [];
-
-            for (var i=0; i<this.length; i++) {
-                slots.push(new Slot(this.slotByIndex(i), i));
-            }
-            return slots;
-        }
-
-        this.slotByIndex = function(index) {
-            var angle = snapToAngle(this.angle);
-            var slotY = this.start.y + index * SCALE * Math.sin(angle);
-            var slotX = this.start.x + index * SCALE * Math.cos(angle);
-            return new Point(slotX, slotY);
-        }
-    }
-    function Painting(location) {
-        this.wall = location.wall;
-        this.slot = location.slot;
-
-        this.start = function() {
-            return this.wall.slotByIndex(this.slot.index);
-        }
-        this.end = function() {
-            return this.wall.slotByIndex(this.slot.index + 1);
-        }
-
-        this.draw = function() {
-            start = this.start();
-            end = this.end();
-
-            drawLine(start, end, PAINTING_COLOR, 4);
-        };
-    }
-
-    function roundToNearest(number, toNearest) {
-        return Math.round(number / toNearest) * toNearest;
-    }
-    function snapToWall(point) {
-        var closestSlot = new Slot();
-        var closestWall = {};
-
-        // Loop through all slots in all walls
+    function fillWalls() {
         for (var i=0; i<Gallery.walls.length; i++) {
-            wall = Gallery.walls[i];
+            var wall = Gallery.walls[i];
+
             var slots = wall.slots();
-
-            for (var j=0; j<slots.length; j++) {
-                var slot = slots[j];
-
-                if (point.distanceTo(slot.point) < point.distanceTo(closestSlot.point)) {
-                    closestSlot = slot;
-                    closestWall = wall;
-                }
+            for (var j=0; j<slots.length; j+=2) {
+                var location = {
+                    slot: slots[j],
+                    wall: wall
+                };
+                addPainting(new Painting(location));
             }
         }
-
-        return {
-            wall: closestWall,
-            slot: closestSlot
-        };
+        draw();
     }
 
-    function snapToGrid(point) {
-        for (var i=0; i<Gallery.walls.length; i++) {
-            var wall = Gallery.walls[i]
-            if (point.distanceTo(wall.start) <= SCALE) {
-                return wall.start;
-            } else if (point.distanceTo(wall.end()) <= SCALE) {
-                return wall.end();
-            }
-        }
-        return new Point(
-            roundToNearest(point.x, SCALE),
-            roundToNearest(point.y, SCALE)
-        );
-    }
-    function snapToAngle(angle) {
-        return roundToNearest(angle, ANGLE_SNAP);
+    function colorRoom(color) {
+        ctx.fillStyle = color
+        ctx.fillRect(0, 0, cst.SCALE * cst.ROOM_WIDTH, cst.SCALE * cst.ROOM_HEIGHT);
+        ctx.fillStyle = '';
     }
 
-    function drawBackground() {
-        ctx.fillStyle = 'rgb(44, 90, 120)';
+    function drawBackground(color) {
+        ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '';
     }
 
-    function drawLine(start, end, color, lineWidth) {
-        color = typeof color !== 'undefined' ? color : "#111";
-        lineWidth = typeof lineWidth !== 'undefined' ? lineWidth : 1;
+    function drawDoors() {
+        var fillStyle = cst.WALL_COLOR;
+        var strokeWidth = 8;
 
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = color;
-        path = new Path2D();
-        path.moveTo(start.x, start.y);
-        path.lineTo(end.x, end.y);
-        ctx.stroke(path);
-        ctx.lineWidth = 1;
+        var doorStart = new Point(cst.SCALE * (cst.ROOM_WIDTH - cst.DOOR_WIDTH), 0);
+        var doorEnd = new Point(cst.SCALE * cst.ROOM_WIDTH, 0);
+        util.drawLine(doorStart, doorEnd, ctx, fillStyle, strokeWidth);
+
+        var doorStart = new Point(0, cst.SCALE * cst.ROOM_HEIGHT);
+        var doorEnd = new Point(cst.SCALE * cst.DOOR_WIDTH, cst.SCALE * cst.ROOM_HEIGHT);
+        util.drawLine(doorStart, doorEnd, ctx, fillStyle, strokeWidth);
     }
 
     function addFrameWalls() {
-        console.log("Adding frame Walls");
+        var width = cst.ROOM_WIDTH * cst.SCALE;
+        var height = cst.ROOM_HEIGHT * cst.SCALE;
 
-        var width = ROOM_WIDTH * SCALE;
-        var height = ROOM_HEIGHT * SCALE;
-
-        topWall = new Wall(new Point(0, 0), 0, ROOM_WIDTH);
-        rightWall = new Wall(new Point(width, 0), Math.PI/2, ROOM_HEIGHT);
-        bottomWall = new Wall(new Point(width, height), Math.PI, ROOM_WIDTH);
-        leftWall = new Wall(new Point(0, height), 3* Math.PI/2, ROOM_HEIGHT);
+        topWall = new Wall(new Point(0, 0), 0, cst.ROOM_WIDTH);
+        rightWall = new Wall(new Point(width, 0), Math.PI/2, cst.ROOM_HEIGHT);
+        bottomWall = new Wall(new Point(width, height), Math.PI, cst.ROOM_WIDTH);
+        leftWall = new Wall(new Point(0, height), 3* Math.PI/2, cst.ROOM_HEIGHT);
 
         Gallery.walls = Gallery.walls.concat([topWall, rightWall, bottomWall, leftWall]);
-        console.log(Gallery.walls);
+    }
+
+    function drawGrid() {
+        // Vertical lines
+        for (var i=1; i<cst.ROOM_WIDTH; i++) {
+            var topPoint = new Point(i * cst.SCALE, 0);
+            var bottomPoint = new Point(i * cst.SCALE, cst.ROOM_HEIGHT * cst.SCALE);
+
+            util.drawLine(topPoint, bottomPoint, ctx, '#AAA', 0.5);
+        }
+
+        // Horizontal lines
+        for (var i=1; i<cst.ROOM_HEIGHT; i++) {
+            var leftPoint = new Point(0, i * cst.SCALE);
+            var rightPoint = new Point(cst.SCALE * cst.ROOM_WIDTH, i * cst.SCALE);
+
+            util.drawLine(leftPoint, rightPoint, ctx, '#AAA', 0.5);
+        }
     }
 
     function drawWalls() {
         for (var i=0; i<Gallery.walls.length; i++) {
             var wall = Gallery.walls[i];
-            console.log("logging the end:");
-            console.log(wall);
-            drawLine(wall.start, wall.end());
+            var thickness = wall.length > cst.WALL_LENGTH ? 5 : 2;
+            util.drawLine(wall.start, wall.end(), ctx, cst.WALL_COLOR, thickness);
         }
     }
     function drawPaintings() {
         for (var i=0; i<Gallery.paintings.length; i++) {
             var painting = Gallery.paintings[i];
-            painting.draw();
+            painting.draw(ctx);
         }
     }
 
     function startWall(mousePos) {
-        var wall = new Wall(snapToGrid(mousePos));
+        var wall = new Wall(util.snapToGrid(mousePos));
         Gallery.pendingItem = wall;
     }
 
@@ -262,40 +131,30 @@ require(['jquery'], function($) {
         var pending = Gallery.pendingItem;
         pending.angle = pending.start.angleBetween(mousePos);
         Gallery.walls.push(pending);
-        console.log(Gallery.walls);
+        Gallery.portableWalls.push(pending);
     }
 
     function drawPendingWall(mousePos) {
         var wallStart = Gallery.pendingItem.start;
-        var wallAngle = snapToAngle(wallStart.angleBetween(mousePos));
-        var wallEnd = wallStart.pointAtAngle(wallAngle, WALL_LENGTH);
+        var wallAngle = util.snapToAngle(wallStart.angleBetween(mousePos));
+        var wallEnd = wallStart.pointAtAngle(wallAngle, cst.WALL_LENGTH);
 
-        drawLine(wallStart, wallEnd);
+        util.drawLine(wallStart, wallEnd, ctx);
     }
     function drawPendingPainting(mousePos) {
 
-        var location = snapToWall(mousePos);
+        var location = util.snapToWall(mousePos);
         var painting = new Painting(location);
-        painting.draw();
+        painting.draw(ctx);
         return painting;
     }
     function addPainting(painting) {
         Gallery.paintings.push(painting);
-        console.log(Gallery.paintings);
+        updateNumPaintings();
     }
 
     function drawCursor(point, color) {
-
-        if (color == undefined) {
-            color = '#333'
-        }
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, CURSOR_SIZE, 0, 2 * Math.PI, false);
-
-        ctx.fill();
-        ctx.fillStyle = '';
+        util.drawCircle(ctx, point, cst.CURSOR_SIZE, color);
     }
 
     function draw(mousePos) {
@@ -303,53 +162,109 @@ require(['jquery'], function($) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
         ctx.save();
-        drawBackground();
+        drawBackground(cst.BACKGROUND_COLOR);
 
-        ctx.translate(PADDING_LEFT, PADDING_TOP);
-        drawBackground();
+        ctx.translate(cst.PADDING_LEFT, cst.PADDING_TOP);
+        colorRoom(cst.ROOM_COLOR);
+        if (Gallery.showGrid) {
+            drawGrid();
+        }
+        if (Gallery.showCamera) {
+            Gallery.camera1.drawRange(ctx);
+            Gallery.camera2.drawRange(ctx);
+        }
         drawWalls();
+        drawDoors();
         drawPaintings();
 
-        console.log(mousePos);
-        console.log(Gallery);
-        console.log("\n\n\n");
+        if (Gallery.showCamera) {
+            Gallery.camera1.drawBody(ctx);
+            Gallery.camera2.drawBody(ctx);
+        }
 
-        Gallery.camera1.drawRange();
 
         if (Gallery.mode == Gallery.WALL_MODE) {
-            drawCursor(snapToGrid(mousePos));
+            drawCursor(util.snapToGrid(mousePos));
 
             if (Gallery.drawing) {
                 drawPendingWall(mousePos);
             }
         } else if (Gallery.mode == Gallery.PAINTING_MODE) {
             drawCursor(mousePos);
-            // drawCursor(snapToWall(mousePos).slot.point, PAINTING_COLOR);
-
             drawPendingPainting(mousePos);
+        } else if (Gallery.mode == Gallery.ERASE_MODE) {
+            drawCursor(util.snapToGrid(mousePos), 'white');
         }
     }
 
     function click(mousePos) {
-
         if (Gallery.mode == Gallery.WALL_MODE) {
             if (!Gallery.drawing) {
                 startWall(mousePos);
             } else {
                 completeWall(mousePos);
             }
+
             Gallery.drawing = !Gallery.drawing;
 
         } else if (Gallery.mode == Gallery.PAINTING_MODE) {
             addPainting(drawPendingPainting(mousePos));
+        } else if (Gallery.mode == Gallery.ERASE_MODE) {
+            deleteItemAtPos(mousePos);
         }
+    }
+
+    function deleteItemAtPos(pos) {
+        var snappedPos = util.snapToGrid(pos);
+        var paintings = Gallery.paintings;
+        var walls = Gallery.portableWalls;
+
+        // Try paintings first;
+        for (var i=0; i<paintings.length; i++) {
+            var painting = paintings[i];
+
+            if (intersect.equalPoints(painting.start(), snappedPos) ||
+                intersect.equalPoints(painting.end(), snappedPos)) {
+
+                paintings.splice(paintings.indexOf(painting), 1);
+                updateNumPaintings();
+                draw();
+                return;
+            }
+        }
+        for (var i=0; i<walls.length; i++) {
+            var wall = walls[i];
+
+            if (intersect.equalPoints(wall.start, snappedPos) ||
+                intersect.equalPoints(wall.end(), snappedPos)) {
+
+                walls.splice(walls.indexOf(wall), 1);
+                Gallery.walls.splice(Gallery.walls.indexOf(wall), 1);
+
+                // Delete all child paintings too (reverse order)
+                for (var j=paintings.length; j>0; j--) {
+                    var painting = paintings[j-1];
+
+                    if (painting.wall == wall) {
+                        paintings.splice(paintings.indexOf(painting), 1);
+                    }
+                }
+                updateNumPaintings();
+                draw();
+                return;
+            }
+        }
+    }
+
+    function updateNumPaintings() {
+        $('.num-paintings').text(Gallery.paintings.length);
     }
 
     function getMousePos(canvas, evt) {
         var rect = canvas.getBoundingClientRect();
         return  new Point(
-            evt.clientX - rect.left - PADDING_LEFT,
-            evt.clientY - rect.top - PADDING_TOP
+            evt.clientX - rect.left - cst.PADDING_LEFT,
+            evt.clientY - rect.top - cst.PADDING_TOP
         );
     }
 
@@ -357,7 +272,7 @@ require(['jquery'], function($) {
         draw(getMousePos(canvas, evt));
     }, false);
 
-    canvas.addEventListener("mousedown", function(evt) {
+    canvas.addEventListener("mouseup", function(evt) {
         click(getMousePos(canvas, evt));
     }, false);
 
@@ -369,20 +284,39 @@ require(['jquery'], function($) {
             Gallery.mode = Gallery.PAINTING_MODE;
         } else if ($(this).hasClass('walls')) {
             Gallery.mode = Gallery.WALL_MODE;
-        } else if ($(this).hasClass('select')) {
-            Gallery.mode = Gallery.SELECT_MODE;
+        } else if ($(this).hasClass('erase')) {
+            Gallery.mode = Gallery.ERASE_MODE;
         }
     });
     $('.reset').click(function() {
         Gallery.walls = [];
+        Gallery.portableWalls = [];
         Gallery.paintings = [];
+        Gallery.camera1.reset();
+        Gallery.camera2.reset();
         init();
     });
+    $('.camera').click(function() {
+        Gallery.showCamera = !Gallery.showCamera;
+        draw();
+    });
+    $('.grid').click(function() {
+        Gallery.showGrid = !Gallery.showGrid;
+        draw();
+    })
+    $('.fill').click(function() {
+        fillWalls();
+    })
 
     $('.calculate').click(function() {
-        var score = Gallery.camera1.paintingsVisible();
+        Gallery.camera1.reset();
+        Gallery.camera2.reset();
+        var score = Gallery.camera1.avePaintingsVisible();
+        score += Gallery.camera2.avePaintingsVisible();
+
         console.log(score);
         $('.score').text(score);
+        updateNumPaintings();
     });
 
     init();

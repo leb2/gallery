@@ -3,30 +3,97 @@ html, body {
   margin: 0px;
   font-family: helvetica, arial, sans-serif; }
 
-.gallery-container {
-  height: 100%;
+* {
+  box-sizing: border-box; }
+
+.container {
   display: flex;
-  align-items: center;
-  justify-content: center; }
-  .gallery-container #gallery:hover {
-    cursor: none; }
-  .gallery-container .modes {
-    margin-left: 18px; }
-    .gallery-container .modes .btn {
-      padding: 16px 28px;
-      margin: 6px;
-      background: #BBB;
-      font-size: 12px;
-      text-transform: uppercase;
-      transition: background 0.2s;
-      color: #212121;
+  justify-content: flex-end;
+  height: 100%;
+  width: 100%; }
+  .container .gallery-container {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center; }
+    .container .gallery-container #gallery {
+      display: inline-block; }
+      .container .gallery-container #gallery:hover {
+        cursor: none; }
+  .container .buttons-panel {
+    -webkit-box-shadow: inset 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: inset 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
+    padding-left: 30px;
+    background: #FAFAFA;
+    float: right;
+    width: 33%;
+    height: 100%;
+    background: #2A2A2A; }
+    .container .buttons-panel .buttons-inner {
+      width: 240px;
       text-align: center;
-      font-weight: 300; }
-      .gallery-container .modes .btn:hover {
-        background: #AAA;
-        cursor: pointer; }
-      .gallery-container .modes .btn:active {
-        background: #999; }
-    .gallery-container .modes .mode.selected {
-      background: #a34242;
-      color: white; }
+      margin-left: 12px; }
+      .container .buttons-panel .buttons-inner .line-container {
+        padding: 18px;
+        border: 1px solid #AAA;
+        position: relative;
+        width: 100%;
+        margin: 20px 0px; }
+        .container .buttons-panel .buttons-inner .line-container:nth-of-type(1) {
+          margin-bottom: 40px; }
+        .container .buttons-panel .buttons-inner .line-container .inline-title {
+          position: absolute;
+          display: inline-block;
+          height: 16px;
+          line-height: 16px;
+          top: -8px;
+          left: 17px;
+          color: white;
+          padding: 0px 12px;
+          font-weight: 300;
+          color: #BBB;
+          text-transform: uppercase;
+          font-size: 16px;
+          background: #2A2A2A; }
+      .container .buttons-panel .buttons-inner .btn {
+        padding: 12px 28px;
+        margin: 6px;
+        background: #BBB;
+        font-size: 12px;
+        text-transform: uppercase;
+        transition: background 0.2s;
+        color: #212121;
+        text-align: center;
+        font-weight: 300; }
+        .container .buttons-panel .buttons-inner .btn:hover {
+          background: #AAA;
+          cursor: pointer; }
+        .container .buttons-panel .buttons-inner .btn:active {
+          background: #999; }
+        .container .buttons-panel .buttons-inner .btn.calculate {
+          background: #3b5d85;
+          color: white; }
+          .container .buttons-panel .buttons-inner .btn.calculate:hover {
+            background: #315177;
+            color: #DDD; }
+          .container .buttons-panel .buttons-inner .btn.calculate:active {
+            background: #2b405b;
+            color: #BBB; }
+      .container .buttons-panel .buttons-inner .mode.selected {
+        background: #a34242;
+        color: white; }
+      .container .buttons-panel .buttons-inner .score-container {
+        display: inline-block;
+        width: 180px;
+        background: #333;
+        padding: 18px;
+        color: white;
+        font-weight: 300;
+        font-family: helvetica, arial, sans-serif;
+        text-align: center; }

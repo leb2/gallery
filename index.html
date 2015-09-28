@@ -12,23 +12,43 @@
     </head>
     <body>
 
-        <div class='gallery-container'>
-            <canvas id='gallery' height='500px' width='800px'>
-            </canvas>
-            <div class='modes'>
-                <div class='btn mode paintings'>Pantings</div>
-                <div class='btn selected mode walls'>Walls</div>
-                <div class='btn mode select'>Select</div>
-                <div class='btn reset'>Reset</div>
-                <div class='btn calculate'>Calculate</div>
-                <div class='score-container'>
-                    Score: <span class='score'>0</div>
+        <div class='container'>
+            <div class='gallery-container'>
+                <canvas id='gallery' height='500px' width='800px'>
+                </canvas>
+            </div>
+
+
+            <div class='buttons-panel'>
+                <div class='buttons-inner'>
+                    <div class='line-container'>
+                        <div class='inline-title'>Mode</div>
+                        <div class='btn mode paintings'>Pantings</div>
+                        <div class='btn selected mode walls'>Walls</div>
+                        <div class='btn mode erase'>erase</div>
+                    </div>
+
+                    <div class='line-container'>
+                        <div class='inline-title'>Options</div>
+                        <div class='btn reset'>Reset</div>
+                        <div class='btn camera'>Toggle Cameras</div>
+                        <div class='btn grid'>Toggle Grid</div>
+                        <div class='btn fill'>Fill Walls</div>
+                        <div class='btn calculate'>Calculate</div>
+                    </div>
+                    <div class='score-container'>
+                        <div>
+                            Score: <span class='score'>0</span>
+                        </div>
+                        <div>
+                            # Paintings: <span class='num-paintings'>0</span>
+                        </div>
+
+                    </div>
                 </div>
-        </div>
+            </div>
         </div>
 
-        <!-- <script src="assets/js/vendor/jquery-1.11.2.min.js"></script> -->
         <script src="bower_components/requirejs/require.js" data-main='assets/js/main.js'></script>
-        <script src="assets/js/main.js"></script>
     </body>
 </html>
